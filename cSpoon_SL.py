@@ -21,7 +21,45 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
+st.markdown(
+    """
+    <style>
+      /* This targets the main app container in recent Streamlit versions */
+      div[data-testid="stAppViewContainer"] {
+        direction: rtl !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+st.markdown(
+    """
+    <style>
+    /* Float every stButton wrapper to the right */
+    div.stButton {
+    float: right !important;
+    }
+    /* Select the first button inside any stButton block */
+    div.stButton > button:first-child {
+      background: none !important;
+      color: #4286f4 !important;
+      dir: rtl !important;
+      border: none !important;
+      padding: 0 !important;
+      font-size: inherit !important;
+      direction: rtl !important;
+      text-align: right !important;
+      unicode-bidi: embed !important;
+      cursor: pointer !important;
+    }
+    /* On hover, darken the link like a normal <a> */
+    div.stButton > button:first-child:hover {
+      text-decoration: underline !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 df = pd.read_json("Courses2.json", encoding="utf-8")
@@ -38,22 +76,39 @@ def get_courses(query: str):
         limit=10
     )
     return [match[0] for match in matches if match[1] >= 60]
-
+if "old_choice" not in st.session_state:
+    st.session_state["old_choice"] = None
+if "clicked" not in st.session_state:
+    st.session_state["clicked"] = False
 
 choice = st_sb(get_courses, placeholder="Search cours by number or name ...")
 
-params = st.query_params
-tag_param = params.get("tag", None)
+# params = st.query_params
+# tag_param = params.get("tag", None)
+
+if st.session_state["clicked"] and st.session_state["old_choice"] == choice:
+    st.session_state["old_choice"] = choice
+    choice = st.session_state["choice"]
+    
+elif st.session_state["old_choice"] != choice:
+    st.session_state["old_choice"] = choice
+    st.session_state["choice"] = choice
+    st.session_state["clicked"] = False
+    
+
 
 if choice: 
-    st.query_params.clear() 
+    
     filtered = df[df["tag"] == choice]
 
 
-elif tag_param:
-    filtered = df[df["מספר מקצוע"] == tag_param]
+
 else:
     filtered = pd.DataFrame() #empty
+
+def on_click(tag: str):
+    st.session_state["clicked"] = True
+    st.session_state["choice"] = tag
 
 
 def render_course(r: pd.Series):
@@ -67,7 +122,7 @@ def render_course(r: pd.Series):
 
     def list_section(title: str, items: list):
         if not items: return
-        html = f"<h4 style='margin-bottom:0'>{title}</h4>\n<ul>"
+        st.markdown(f"### {title}")
         for item in items:
             code = item.split(" - ")[0].strip()
             if " - "  in item:
@@ -80,16 +135,11 @@ def render_course(r: pd.Series):
                     label, linkable = code, False
 
             if linkable:
-                href = f"/?tag={urllib.parse.quote(code)}"
-                html += (
-                    f"<li>"
-                    f"<a href='{href}' target='_self'>{label}</a>"
-                    f"</li>"
-                )
+                st.button(label, key = f"link_{code}", 
+                          on_click=on_click, args=(label,))
             else:
-                html += f"<li>{label}</li>\n"   
-        html += "</ul>"
-        st.markdown(html, unsafe_allow_html=True)
+                st.markdown(f"{label}")  
+        st.markdown("")
     
     list_section("מקצועות קדם:", r["מקצועות קדם"])
     list_section("מקצועות חסומים:", r["מקצועות חסומים"])
