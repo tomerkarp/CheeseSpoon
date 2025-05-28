@@ -42,7 +42,6 @@ st.markdown(
     /* Select the first button inside any stButton block */
     div.stButton > button:first-child {
       background: none !important;
-      color: #4286f4 !important;
       dir: rtl !important;
       border: none !important;
       padding: 0 !important;
