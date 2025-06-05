@@ -61,7 +61,7 @@ st.markdown(
 )
 
 
-df = pd.read_json("Courses3.json", encoding="utf-8")
+df = pd.read_json("Courses4.json", encoding="utf-8")
 df["מספר מקצוע"] = df["מספר מקצוע"].astype(str).str.zfill(8)
 
 @st.cache_data
