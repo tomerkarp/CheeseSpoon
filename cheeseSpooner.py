@@ -5,7 +5,15 @@ import pandas as pd
 
 course_unlocks = defaultdict(list) 
 
-courses_from_rishum = json.load(open("courses_from_rishum.json", "r", encoding="utf-8"))
+files = [
+    "courses_from_rishum.json",
+    "courses_from_rishum2.json",
+    "courses_from_rishum3.json",
+]
+courses_from_rishum = []
+for file in files:
+    with open(file, "r", encoding="utf-8") as f:
+        courses_from_rishum.extend(json.load(f))
 
 Courses = pd.DataFrame(courses_from_rishum)
 Courses.drop(columns=["schedule"], inplace=True)
@@ -13,6 +21,11 @@ Courses = pd.json_normalize(Courses["general"])
 Courses.drop(columns=["מועד ב", "מועד א", "מסגרת לימודים", "אחראים", "הערות", "בוחן מועד א", "בוחן מועד ב"], inplace=True)
 Courses["מקצועות ללא זיכוי נוסף (מוכלים)"] = Courses["מקצועות ללא זיכוי נוסף (מוכלים)"].combine_first(Courses["מקצועות ללא זיכוי נוסף (מכילים)"])
 Courses.drop(columns=["מקצועות ללא זיכוי נוסף (מכילים)"], inplace=True)
+
+# Check for duplicate courses based on "מספר מקצוע"
+if Courses["מספר מקצוע"].duplicated().any():
+    duplicates = Courses[Courses["מספר מקצוע"].duplicated(keep=False)]["מספר מקצוע"].unique()
+    print("Warning: Duplicate courses found for course number(s):", duplicates)
 
 # 1. parse prerequisites into lists (vectorized)
 Courses = Courses.copy()
@@ -78,7 +91,7 @@ for key in keys_to_process:
     )
 
 
-json.dump(Courses.to_dict(orient="records"), open("Courses2.json", "w", encoding="utf-8"), ensure_ascii=False, indent=4)
+json.dump(Courses.to_dict(orient="records"), open("Courses3.json", "w", encoding="utf-8"), ensure_ascii=False, indent=4)
 
 
     
